@@ -1,7 +1,6 @@
 {
   "name": "todolist-15_14_05",
   "private": true,
-  "homepage": "https://github.com/IamXacer/todolist-15_14_05.git",
   "version": "0.1.0",
   "type": "module",
   "scripts": {
@@ -35,10 +34,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/your-username/todolist-14.git"
+    "url": "git+https://github.com/IamXacer/todolist-15_14_05.git"
   },
   "bugs": {
-    "url": "https://github.com/your-username/todolist-14/issues"
+    "url": "https://github.com/IamXacer/todolist-15_14_05/issues"
   },
-  "homepage": "https://github.com/your-username/todolist-14#readme"
+  "homepage": "https://github.com/IamXacer/todolist-15_14_05#readme"
 }
