@@ -3,6 +3,10 @@ import { createAppSlice } from "@/common/utils"
 import { todolistsApi } from "@/features/todolists/api/todolistsApi"
 import type { Todolist } from "@/features/todolists/api/todolistsApi.types"
 import { RequestStatus } from "@/common/types"
+import { handleServerAppError } from "@/common/utils/handleServerAppError.ts"
+import { handleServerNetworkError } from "@/common/utils/handleServerNetworkError.ts"
+import { ResultCode } from "@/common/enums"
+
 
 export const todolistsSlice = createAppSlice({
   name: "todolists",
@@ -14,7 +18,7 @@ export const todolistsSlice = createAppSlice({
     changeTodolistStatusAC: create.reducer<{ id: string; entityStatus: RequestStatus }>
     ((state, action) => {
       const todolist = state.find((todolist)=>
-      todolist.id === action.payload.id)
+        todolist.id === action.payload.id)
       if(todolist){
         todolist.entityStatus = action.payload.entityStatus
       }
@@ -43,21 +47,36 @@ export const todolistsSlice = createAppSlice({
     createTodolistTC: create.asyncThunk(
       async (title: string, { dispatch, rejectWithValue }) => {
         try {
-          dispatch(setAppStatusAC({ status: "loading" }))
-          const res = await todolistsApi.createTodolist(title)
-          dispatch(setAppStatusAC({ status: "succeeded" }))
-          return { todolist: res.data.data.item }
-        } catch (error) {
-          dispatch(setAppStatusAC({ status: "failed" }))
-          return rejectWithValue(null)
+          dispatch(setAppStatusAC({ status: "loading" }));
+          const res = await todolistsApi.createTodolist(title);
+
+          // Добавляем проверку результата на успешность
+          if (res.data.resultCode === ResultCode.Success) {
+            dispatch(setAppStatusAC({ status: "succeeded" }));
+            return { todolist: res.data.data.item };
+          } else {
+            // Обработка ошибки, если результат неуспешный
+            handleServerAppError(res.data, dispatch);
+            dispatch(setAppStatusAC({ status: "failed" }));
+            return rejectWithValue(null);
+          }
+        } catch (error: any) {
+          // Обработка ошибок сети
+          handleServerNetworkError(dispatch, error);
+          return rejectWithValue(null);
         }
       },
       {
         fulfilled: (state, action) => {
-          state.unshift({ ...action.payload.todolist, filter: "all", entityStatus: "idle"  })
+          state.unshift({
+            ...action.payload.todolist,
+            filter: "all",
+            entityStatus: "idle"
+          });
         },
-      },
-    ),
+      }
+    )
+    ,
     deleteTodolistTC: create.asyncThunk(
       async (id: string, { dispatch, rejectWithValue }) => {
         try {
@@ -84,6 +103,8 @@ export const todolistsSlice = createAppSlice({
       async (payload: { id: string; title: string }, { dispatch, rejectWithValue }) => {
         try {
           dispatch(setAppStatusAC({ status: "loading" }))
+          // Используем payload.id вместо id
+          dispatch(changeTodolistStatusAC({ id: payload.id, entityStatus: 'loading' }))
           await todolistsApi.changeTodolistTitle(payload)
           dispatch(setAppStatusAC({ status: "succeeded" }))
           return payload

@@ -1,4 +1,7 @@
-import type { TaskPriority, TaskStatus } from "@/common/enums/enums"
+import { TaskPriority, TaskStatus } from "@/common/enums/enums"
+
+// Добавляем RequestStatus
+export type RequestStatus = "idle" | "loading" | "succeeded" | "failed"
 
 export type DomainTask = {
   description: string
@@ -11,6 +14,7 @@ export type DomainTask = {
   todoListId: string
   order: number
   addedDate: string
+  entityStatus: RequestStatus // Добавляем entityStatus
 }
 
 export type GetTasksResponse = {
@@ -27,3 +31,6 @@ export type UpdateTaskModel = {
   startDate: string
   deadline: string
 }
+export type Task = DomainTask & { entityStatus: RequestStatus }
+
+export type TasksState = Record<string, Task[]> // Структура состояния: ключ — это todolistId, а значение — массив задач

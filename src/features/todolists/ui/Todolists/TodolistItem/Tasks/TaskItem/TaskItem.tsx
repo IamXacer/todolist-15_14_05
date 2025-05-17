@@ -13,9 +13,10 @@ import { getListItemSx } from "./TaskItem.styles"
 type Props = {
   task: DomainTask
   todolistId: string
+  disabled?: boolean
 }
 
-export const TaskItem = ({ task, todolistId }: Props) => {
+export const TaskItem = ({ task, todolistId, disabled }: Props) => {
   const dispatch = useAppDispatch()
 
   const deleteTask = () => {
@@ -42,10 +43,21 @@ export const TaskItem = ({ task, todolistId }: Props) => {
   return (
     <ListItem sx={getListItemSx(isTaskCompleted)}>
       <div>
-        <Checkbox checked={isTaskCompleted} onChange={changeTaskStatus} />
-        <EditableSpan value={task.title} onChange={changeTaskTitle} />
+        <Checkbox
+          checked={isTaskCompleted}
+          onChange={changeTaskStatus}
+          disabled={disabled} // disabled Checkbox if entityStatus is 'loading'
+        />
+        <EditableSpan
+          value={task.title}
+          onChange={changeTaskTitle}
+          disabled={disabled} // disabled EditableSpan if entityStatus is 'loading'
+        />
       </div>
-      <IconButton onClick={deleteTask}>
+      <IconButton
+        onClick={deleteTask}
+        disabled={disabled} // disabled IconButton if entityStatus is 'loading'
+      >
         <DeleteIcon />
       </IconButton>
     </ListItem>
