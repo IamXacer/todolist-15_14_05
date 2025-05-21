@@ -31,6 +31,8 @@ export type UpdateTaskModel = {
   startDate: string
   deadline: string
 }
+/*
 export type Task = DomainTask & { entityStatus: RequestStatus }
 
 export type TasksState = Record<string, Task[]> // Структура состояния: ключ — это todolistId, а значение — массив задач
+*/

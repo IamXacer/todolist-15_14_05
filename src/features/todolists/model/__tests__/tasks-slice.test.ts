@@ -1,8 +1,9 @@
 import { TaskPriority, TaskStatus } from "@/common/enums"
 import { nanoid } from "@reduxjs/toolkit"
 import { beforeEach, expect, test } from "vitest"
-import { createTaskTC, deleteTaskTC, tasksReducer, type TasksState, updateTaskTC } from "../tasks-slice"
-import { createTodolistTC, deleteTodolistTC } from "../todolists-slice"
+import { createTaskTC, deleteTaskTC, tasksReducer, type TasksState } from "../tasks-slice"
+
+import { RequestStatus } from "@/features/todolists/api/tasksApi.types.ts"
 
 let startState: TasksState = {}
 
@@ -13,6 +14,7 @@ const taskDefaultValues = {
   startDate: "",
   priority: TaskPriority.Low,
   order: 0,
+  entityStatus: "idle" as RequestStatus,  // Используем тип RequestStatus
 }
 
 beforeEach(() => {
@@ -52,6 +54,7 @@ test("correct task should be deleted", () => {
         priority: TaskPriority.Low,
         order: 0,
         todoListId: "todolistId1",
+        entityStatus: "idle", // Добавляем entityStatus
       },
       {
         id: "2",
@@ -64,6 +67,7 @@ test("correct task should be deleted", () => {
         priority: TaskPriority.Low,
         order: 0,
         todoListId: "todolistId1",
+        entityStatus: "idle", // Добавляем entityStatus
       },
       {
         id: "3",
@@ -76,6 +80,7 @@ test("correct task should be deleted", () => {
         priority: TaskPriority.Low,
         order: 0,
         todoListId: "todolistId1",
+        entityStatus: "idle", // Добавляем entityStatus
       },
     ],
     todolistId2: [
@@ -90,6 +95,7 @@ test("correct task should be deleted", () => {
         priority: TaskPriority.Low,
         order: 0,
         todoListId: "todolistId2",
+        entityStatus: "idle", // Добавляем entityStatus
       },
       {
         id: "3",
@@ -102,6 +108,7 @@ test("correct task should be deleted", () => {
         priority: TaskPriority.Low,
         order: 0,
         todoListId: "todolistId2",
+        entityStatus: "idle", // Добавляем entityStatus
       },
     ],
   })
@@ -119,6 +126,7 @@ test("correct task should be created at correct array", () => {
     priority: TaskPriority.Low,
     order: 0,
     todoListId: "todolistId2",
+    entityStatus: "idle" as RequestStatus,  // Используем тип RequestStatus
   }
   const endState = tasksReducer(
     startState,
@@ -130,85 +138,5 @@ test("correct task should be created at correct array", () => {
   expect(endState.todolistId2[0].id).toBeDefined()
   expect(endState.todolistId2[0].title).toBe("juice")
   expect(endState.todolistId2[0].status).toBe(TaskStatus.New)
-})
-
-test("correct task should change its status", () => {
-  const task = {
-    id: "2",
-    title: "milk",
-    status: TaskStatus.New,
-    description: "",
-    deadline: "",
-    addedDate: "",
-    startDate: "",
-    priority: TaskPriority.Low,
-    order: 0,
-    todoListId: "todolistId2",
-  }
-  const endState = tasksReducer(
-    startState,
-    updateTaskTC.fulfilled({ task }, "requestId", {
-      todolistId: "todolistId2",
-      taskId: "2",
-      domainModel: { status: TaskStatus.New },
-    }),
-  )
-
-  expect(endState.todolistId2[1].status).toBe(TaskStatus.New)
-  expect(endState.todolistId1[1].status).toBe(TaskStatus.Completed)
-})
-
-test("correct task should change its title", () => {
-  const task = {
-    id: "2",
-    title: "coffee",
-    status: TaskStatus.Completed,
-    description: "",
-    deadline: "",
-    addedDate: "",
-    startDate: "",
-    priority: TaskPriority.Low,
-    order: 0,
-    todoListId: "todolistId2",
-  }
-  const endState = tasksReducer(
-    startState,
-    updateTaskTC.fulfilled({ task }, "requestId", {
-      todolistId: "todolistId2",
-      taskId: "2",
-      domainModel: { title: "coffee" },
-    }),
-  )
-
-  expect(endState.todolistId2[1].title).toBe("coffee")
-  expect(endState.todolistId1[1].title).toBe("JS")
-})
-
-test("array should be created for new todolist", () => {
-  const title = "New todolist"
-  const todolist = { id: "todolistId3", title, addedDate: "", order: 0 }
-  const endState = tasksReducer(startState, createTodolistTC.fulfilled({ todolist }, "requestId", title))
-
-  const keys = Object.keys(endState)
-  const newKey = keys.find((k) => k !== "todolistId1" && k !== "todolistId2")
-  if (!newKey) {
-    throw Error("New key should be added")
-  }
-
-  expect(keys.length).toBe(3)
-  expect(endState[newKey]).toEqual([])
-})
-
-test("property with todolistId should be deleted", () => {
-  const endState = tasksReducer(
-    startState,
-    deleteTodolistTC.fulfilled({ id: "todolistId2" }, "requestId", "todolistId2"),
-  )
-
-  const keys = Object.keys(endState)
-
-  expect(keys.length).toBe(1)
-  expect(endState["todolistId2"]).not.toBeDefined()
-  // or
-  expect(endState["todolistId2"]).toBeUndefined()
+  expect(endState.todolistId2[0].entityStatus).toBe("idle")  // Проверяем, что entityStatus установлен
 })

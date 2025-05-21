@@ -82,7 +82,7 @@ export const todolistsSlice = createAppSlice({
       async (id: string, { dispatch, rejectWithValue }) => {
         try {
           dispatch(setAppStatusAC({ status: "loading" }))
-          dispatch(changeTodolistStatusAC({id,entityStatus:'loading'}))
+        /*  dispatch(changeTodolistStatusAC({id,entityStatus:'loading'}))*/
           await todolistsApi.deleteTodolist(id)
           dispatch(setAppStatusAC({ status: "succeeded" }))
           return { id }
@@ -105,7 +105,7 @@ export const todolistsSlice = createAppSlice({
       async (payload: { id: string; title: string }, { dispatch, rejectWithValue }) => {
         try {
           dispatch(setAppStatusAC({ status: "loading" }))
-          dispatch(changeTodolistStatusAC({ id: payload.id, entityStatus: 'loading' }))
+       /*   dispatch(changeTodolistStatusAC({ id: payload.id, entityStatus: 'loading' }))*/
 
           const res = await todolistsApi.changeTodolistTitle(payload)
 

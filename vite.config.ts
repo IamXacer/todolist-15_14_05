@@ -10,4 +10,7 @@ export default defineConfig({
       "@/": `${path.resolve(__dirname, "src")}/`,
     },
   },
-})
+  build: {
+    outDir: "build", // Указываем папку build для сборки
+  },
+});
