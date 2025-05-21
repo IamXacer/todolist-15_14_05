@@ -69,14 +69,6 @@ export const tasksSlice = createAppSlice({
           const res = await tasksApi.createTask(payload)
           if (res.data.resultCode === ResultCode.Success) {
             dispatch(setAppStatusAC({ status: "succeeded" }))
-
-            // Обновляем статус задачи после создания
-            dispatch(changeTaskEntityStatusAC({
-              todolistId: payload.todolistId,
-              taskId: res.data.data.item.id,  // Передаем id созданной задачи
-              entityStatus: 'idle'  // Статус после создания
-            }));
-
             return { task: res.data.data.item }
           }  else {
             handleServerAppError(res.data, dispatch)
@@ -103,9 +95,10 @@ export const tasksSlice = createAppSlice({
           await tasksApi.deleteTask(payload)
           dispatch(setAppStatusAC({ status: "succeeded" }))
           return payload
-        } catch (error) {
-          dispatch(setAppStatusAC({ status: "failed" }))
-          return rejectWithValue(null)
+        }catch (error: any) {
+          // Обработка ошибок сети
+          handleServerNetworkError(dispatch, error);
+          return rejectWithValue(null);
         }
       },
       {
@@ -119,50 +112,53 @@ export const tasksSlice = createAppSlice({
       },
     )
     ,
-    updateTaskTC: create.asyncThunk(
-      async (
-        payload: { todolistId: string; taskId: string; domainModel: Partial<UpdateTaskModel> },
-        { dispatch, getState, rejectWithValue },
-      ) => {
-        const { todolistId, taskId, domainModel } = payload
-
-        const allTodolistTasks = (getState() as RootState).tasks[todolistId]
-        const task = allTodolistTasks.find((task) => task.id === taskId)
-
-        if (!task) {
-          return rejectWithValue(null)
-        }
-
-        const model: UpdateTaskModel = {
-          description: task.description,
-          title: task.title,
-          priority: task.priority,
-          startDate: task.startDate,
-          deadline: task.deadline,
-          status: task.status,
-          ...domainModel,
-        }
-
-        try {
-          dispatch(setAppStatusAC({ status: "loading" }))
-          const res = await tasksApi.updateTask({ todolistId, taskId, model })
-          dispatch(setAppStatusAC({ status: "succeeded" }))
-          return { task: res.data.data.item }
-        } catch (error) {
-          dispatch(setAppStatusAC({ status: "failed" }))
-          return rejectWithValue(null)
-        }
-      },
-      {
-        fulfilled: (state, action) => {
-          const allTodolistTasks = state[action.payload.task.todoListId]
-          const taskIndex = allTodolistTasks.findIndex((task) => task.id === action.payload.task.id)
-          if (taskIndex !== -1) {
-            allTodolistTasks[taskIndex] = action.payload.task
+      updateTaskTC: create.asyncThunk(
+        async (
+          payload: { todolistId: string; taskId: string; domainModel: Partial<UpdateTaskModel> },
+          { dispatch, getState, rejectWithValue },
+        ) => {
+          const { todolistId, taskId, domainModel } = payload
+          const allTodolistTasks = (getState() as RootState).tasks[todolistId]
+          const task = allTodolistTasks.find((task) => task.id === taskId)
+          if (!task) {
+            return rejectWithValue(null)
+          }
+          const model: UpdateTaskModel = {
+            description: task.description,
+            title: task.title,
+            priority: task.priority,
+            startDate: task.startDate,
+            deadline: task.deadline,
+            status: task.status,
+            ...domainModel,  }
+          try {
+            dispatch(setAppStatusAC({ status: "loading" }))
+            const res = await tasksApi.updateTask({ todolistId, taskId, model })
+            if (res.data.resultCode === ResultCode.Success) {
+              dispatch(setAppStatusAC({ status: "succeeded" }))
+              return { task: res.data.data.item }
+            }  else {
+              handleServerAppError(res.data, dispatch)
+              dispatch(setAppStatusAC({ status: "failed" }))
+              return rejectWithValue(null)
+            }
+          }
+          catch (error: any) {
+            // Обработка ошибок сети
+            handleServerNetworkError(dispatch, error);
+            return rejectWithValue(null);
           }
         },
-      },
-    )
+        {
+          fulfilled: (state, action) => {
+            const allTodolistTasks = state[action.payload.task.todoListId]
+            const taskIndex = allTodolistTasks.findIndex((task) => task.id === action.payload.task.id)
+            if (taskIndex !== -1) {
+              allTodolistTasks[taskIndex] = action.payload.task
+            }
+          },
+        },
+      )
     ,
     changeTaskTitleAC: create.reducer<{ todolistId: string; taskId: string; title: string }>((state, action) => {
       const task = state[action.payload.todolistId].find((task) => task.id === action.payload.taskId)
