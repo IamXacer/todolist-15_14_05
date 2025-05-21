@@ -57,12 +57,13 @@ export const todolistsSlice = createAppSlice({
           } else {
             // Обработка ошибки, если результат неуспешный
             handleServerAppError(res.data, dispatch);
-            dispatch(setAppStatusAC({ status: "failed" }));
+           /* dispatch(setAppStatusAC({ status: "failed" }));*/
             return rejectWithValue(null);
           }
         } catch (error: any) {
           // Обработка ошибок сети
-          handleServerNetworkError(dispatch, error);
+          handleServerNetworkError(dispatch, error); // Обработка ошибок сети
+    /*      dispatch(setAppStatusAC({ status: "failed" }));*/
           return rejectWithValue(null);
         }
       },
@@ -85,9 +86,10 @@ export const todolistsSlice = createAppSlice({
           await todolistsApi.deleteTodolist(id)
           dispatch(setAppStatusAC({ status: "succeeded" }))
           return { id }
-        } catch (error) {
-          dispatch(setAppStatusAC({ status: "failed" }))
-          return rejectWithValue(null)
+        }catch (error: any) {
+          // Обработка ошибок сети
+          handleServerNetworkError(dispatch, error);
+          return rejectWithValue(null);
         }
       },
       {
@@ -103,18 +105,28 @@ export const todolistsSlice = createAppSlice({
       async (payload: { id: string; title: string }, { dispatch, rejectWithValue }) => {
         try {
           dispatch(setAppStatusAC({ status: "loading" }))
-          // Используем payload.id вместо id
           dispatch(changeTodolistStatusAC({ id: payload.id, entityStatus: 'loading' }))
-          await todolistsApi.changeTodolistTitle(payload)
-          dispatch(setAppStatusAC({ status: "succeeded" }))
-          return payload
+
+          const res = await todolistsApi.changeTodolistTitle(payload)
+
+          // Поскольку нет поля item, просто проверяем resultCode
+          if (res.data.resultCode === ResultCode.Success) {
+            dispatch(setAppStatusAC({ status: "succeeded" }))
+            return { id: payload.id, title: payload.title }  // Возвращаем payload для обновления в state
+          } else {
+            handleServerAppError(res.data, dispatch)
+            dispatch(setAppStatusAC({ status: "failed" }))
+            return rejectWithValue(null)
+          }
         } catch (error) {
-          dispatch(setAppStatusAC({ status: "failed" }))
+          // Обработка ошибки сети с использованием функции handleServerNetworkError
+          handleServerNetworkError(dispatch, error)
           return rejectWithValue(null)
         }
       },
       {
         fulfilled: (state, action) => {
+          // Находим нужный список по ID и обновляем его название
           const index = state.findIndex((todolist) => todolist.id === action.payload.id)
           if (index !== -1) {
             state[index].title = action.payload.title
@@ -122,6 +134,7 @@ export const todolistsSlice = createAppSlice({
         },
       },
     ),
+
     changeTodolistFilterAC: create.reducer<{ id: string; filter: FilterValues }>((state, action) => {
       const todolist = state.find((todolist) => todolist.id === action.payload.id)
       if (todolist) {
